@@ -1,0 +1,45 @@
+# Windows test build of IcyTerm for the bbs-enhancements branch.
+#
+# Runs when this file changes on bbs-enhancements, or by hand from the
+# Actions tab ("Run workflow"). It only builds and uploads icy_term.exe as a
+# short-lived artifact: no release, no other apps, no other platforms.
+
+name: Windows build (icy_term)
+
+on:
+  push:
+    branches: ["bbs-enhancements"]
+    paths:
+      - ".github/workflows/windows-build.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: windows-build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # audiopus_sys bundles Opus with cmake_minimum_required < 3.5, which CMake 4 rejects.
+  CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+
+jobs:
+  build_windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build icy_term.exe
+        shell: bash
+        run: |
+          git submodule update --init
+          cargo build --release --locked -p icy_term --bin icy_term
+          ls -l target/release/icy_term.exe
+
+      - name: Upload icy_term.exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: icy_term-windows-x86_64-${{ github.sha }}
+          path: target/release/icy_term.exe
+          retention-days: 7
+          if-no-files-found: error
