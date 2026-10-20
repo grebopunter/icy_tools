@@ -1,0 +1,300 @@
+; SyncTERM dialing directory - synthetic parser test data
+; do not use
+
+[Prairie Dog BBS]
+	ConnectionType=Telnet
+	Address=192.0.2.10
+	Port=23
+	Comment=Plain old telnet
+
+[Blue Heron SSH]
+ConnectionType=SSH
+Address=heron.example.org
+Port=2222
+UserName=fakeuser
+Password=fakepass
+
+[Goose Hollow]
+    CONNECTIONTYPE    =    ssh
+	address   =   goose.example.net
+	Port = 22
+	Comment=extra spaces and odd case
+
+[Night Owl]
+ConnectionType=tElNeT
+Address=owl.example.com
+; comment inside a section
+Port=2323
+
+[Mailbox Junction]
+ConnectionType=RLogin
+Address=192.0.2.44
+Comment=no port given
+
+[Dead Letter Office]
+ConnectionType=RLoginReversed
+Address=192.0.2.45
+
+[Backwards Runner]
+ConnectionType=RLogin Reversed
+Address=192.0.2.46
+
+[Quiet Shack]
+ConnectionType=Raw
+Address=192.0.2.50
+Port=7777
+
+[Raw No Port]
+ConnectionType=Raw
+Address=raw.example.org
+
+[Telnet Secure]
+ConnectionType=TelnetS
+Address=telnets.example.net
+Port=992
+Comment=unsupported type test
+
+[Modem Bank 0]
+ConnectionType=Modem
+Address=5551200
+Port=0
+
+[Serial Port Box]
+ConnectionType=Serial
+Address=COM1
+Port=9600
+
+[No RTS Please]
+ConnectionType=NoRTS
+Address=192.0.2.60
+Port=23
+
+[Shell Shack]
+ConnectionType=Shell
+Address=192.0.2.61
+
+[Ghost Station]
+ConnectionType=MBBSGhost
+Address=ghost.example.org
+Port=23
+
+[MQTT Broker Test]
+ConnectionType=MQTT
+Address=192.0.2.70
+Port=1883
+
+[Mystery Board]
+ConnectionType=Unknown
+Address=unknown.example.net
+Port=23
+
+[Numeric Zero]
+ConnectionType=0
+Address=192.0.2.80
+
+[Numeric One]
+ConnectionType=1
+Address=192.0.2.81
+
+[Numeric Two]
+ConnectionType=2
+Address=192.0.2.82
+Port=22
+
+[Numeric Five]
+ConnectionType=5
+Address=192.0.2.83
+
+[Numeric Ten]
+ConnectionType=10
+Address=192.0.2.84
+
+[Numeric Thirteen]
+ConnectionType=13
+Address=192.0.2.85
+
+[No Address Here]
+ConnectionType=Telnet
+Port=23
+Comment=Missing Address entirely
+
+[Empty Address Board]
+ConnectionType=Telnet
+Address=
+Port=23
+
+[Port Zero]
+ConnectionType=Telnet
+Address=192.0.2.90
+Port=0
+
+[Port Too Big]
+ConnectionType=Telnet
+Address=192.0.2.91
+Port=99999
+
+[Port Not A Number]
+ConnectionType=Telnet
+Address=192.0.2.92
+Port=abc
+
+[Port With Spaces]
+ConnectionType=Telnet
+Address=192.0.2.93
+Port= 23 
+
+[Duplicate of Prairie Dog]
+ConnectionType=Telnet
+Address=192.0.2.10
+Port=23
+Comment=exact duplicate of earlier board
+
+[Duplicate Of Prairie Dog Case]
+ConnectionType=Telnet
+Address=192.0.2.10
+Port=23
+Comment=same as earlier, different name
+
+[Prairie Dog Uppercase Host]
+ConnectionType=Telnet
+Address=PRAIRIE.EXAMPLE.ORG
+Port=23
+
+[Heron Different Port]
+ConnectionType=SSH
+Address=heron.example.org
+Port=2200
+
+[Heron Same Port Different Type]
+ConnectionType=Telnet
+Address=heron.example.org
+Port=2222
+
+[IPv6 Six Board]
+ConnectionType=Telnet
+Address=2001:db8::6
+Port=23
+
+[IPv6 Sixteen]
+ConnectionType=SSH
+Address=2001:db8::16
+Port=22
+
+[User At Host]
+ConnectionType=SSH
+Address=fakeuser@ssh.example.org
+Port=22
+
+[Telnet Scheme]
+ConnectionType=Telnet
+Address=telnet://scheme.example.net
+Port=23
+
+[Credentials Test]
+ConnectionType=SSH
+Address=192.0.2.100
+UserName=fakeuser
+Password=fakepass
+SystemPassword=fakesys
+
+[Equals In Comment]
+ConnectionType=Telnet
+Address=192.0.2.101
+Comment=a=b;c and more = signs
+
+[Semicolon In Comment]
+ConnectionType=SSH
+Address=192.0.2.102
+Comment=semi;colon;inside
+
+[Accented Comment]
+ConnectionType=Telnet
+Address=192.0.2.103
+Comment=café über board é ü
+
+[Screen Mode]
+ConnectionType=Telnet
+Address=192.0.2.104
+ScreenMode=80x25
+Font=default
+
+[No Status Board]
+ConnectionType=Telnet
+Address=192.0.2.105
+NoStatus=1
+
+[Added And Calls]
+ConnectionType=Telnet
+Address=192.0.2.106
+Added=01/02/2003
+TotalCalls=42
+
+[Download Path]
+ConnectionType=SSH
+Address=192.0.2.107
+DownloadPath=C:\fake\path
+
+[TLS PSK Board]
+ConnectionType=Telnet
+Address=192.0.2.108
+TLSPSK=fakepsk
+
+[SSH No Auth]
+ConnectionType=SSHNA
+Address=192.0.2.109
+Port=22
+
+[SSH No Auth Display]
+ConnectionType=SSH (no auth)
+Address=192.0.2.110
+
+[SortProfiles]
+SortOrder=1
+
+[]
+ConnectionType=Telnet
+Address=192.0.2.111
+Port=23
+Comment=empty section name with valid address
+
+[Tab Indented Board]
+	ConnectionType=Telnet
+	Address=192.0.2.112
+	Port=23
+
+[Blank Line Follower]
+ConnectionType=Telnet
+Address=192.0.2.113
+
+; a standalone comment between sections
+
+[Another Blank Follower]
+ConnectionType=SSH
+Address=198.51.100.10
+
+[Documentation Net]
+ConnectionType=Raw
+Address=198.51.100.20
+Port=4444
+
+[Documentation Com]
+ConnectionType=Telnet
+Address=doc.example.com
+Port=23
+
+[Lowercase Connect]
+connectiontype=telnet
+address=192.0.2.114
+port=23
+
+[Mixed Case Keys]
+ConnectionType=SSH
+ADDRESS=192.0.2.115
+uSeRnAmE=fakeuser
+pAsSwOrD=fakepass
+
+[Final Normal]
+ConnectionType=Telnet
+Address=192.0.2.116
+Port=23
+Comment=last ordinary entry

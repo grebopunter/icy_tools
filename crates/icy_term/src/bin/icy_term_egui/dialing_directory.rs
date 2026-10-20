@@ -37,7 +37,8 @@ pub struct DialingDirectory {
     icon_cache: IconCache,
     editor: profile_editor::ProfileEditor,
     load_sources: bool,
-    source_result: Option<std::sync::mpsc::Receiver<Vec<Address>>>,
+    source_result: Option<std::sync::mpsc::Receiver<(Vec<Address>, Vec<icy_term::data::SourceReport>)>>,
+    source_reports: Vec<icy_term::data::SourceReport>,
     #[cfg(test)]
     pub bounds: Option<egui::Rect>,
     #[cfg(test)]
@@ -151,18 +152,23 @@ impl DialingDirectory {
                 let mut remote = icy_term::AddressBook::default();
                 remote.addresses.clear();
                 std::thread::spawn(move || {
-                    icy_term::data::merge_web_directories(&mut remote, &sources);
-                    let _ = sender.send(remote.addresses);
+                    let reports = icy_term::data::merge_web_directories_with_reports(&mut remote, &sources);
+                    let _ = sender.send((remote.addresses, reports));
                     context.request_repaint();
                 });
             }
         }
         if let Some(receiver) = &self.source_result {
             match receiver.try_recv() {
-                Ok(entries) => {
+                Ok((entries, reports)) => {
                     if let Some(book) = &mut self.phonebook {
                         book.book.addresses.extend(entries);
                     }
+                    let failed: Vec<_> = reports.iter().filter(|r| r.report.is_none()).map(|r| r.name.clone()).collect();
+                    if !failed.is_empty() {
+                        self.error = Some(format!("Unable to load: {}", failed.join(", ")));
+                    }
+                    self.source_reports = reports;
                     self.source_result = None;
                 }
                 Err(std::sync::mpsc::TryRecvError::Disconnected) => {
@@ -427,7 +433,16 @@ impl DialingDirectory {
                                 ui.selectable_value(&mut book.source, None, &*tr!("egui-all-sources"));
                                 ui.selectable_value(&mut book.source, Some(String::new()), &*tr!("egui-local-phonebook"));
                                 for source in sources {
-                                    ui.selectable_value(&mut book.source, Some(source.clone()), source);
+                                    let report = self.source_reports.iter().find(|r| r.name == source).and_then(|r| r.report.clone());
+                                    let label = match &report {
+                                        Some(report) if report.skipped() > 0 => format!("{source} ({}, {} skipped)", report.imported, report.skipped()),
+                                        Some(report) => format!("{source} ({})", report.imported),
+                                        None => source.clone(),
+                                    };
+                                    let response = ui.selectable_value(&mut book.source, Some(source.clone()), label);
+                                    if let Some(report) = report.filter(|r| r.skipped() > 0) {
+                                        response.on_hover_text(source_report_text(&report));
+                                    }
                                 }
                             }
                             ui.separator();
@@ -1566,7 +1581,19 @@ mod tests {
         remote.address = "localhost".into();
         remote.web_source = Some("Community".into());
         let (sender, receiver) = std::sync::mpsc::channel();
-        sender.send(vec![remote]).unwrap();
+        let report = icy_term::data::ImportReport {
+            imported: 1,
+            ..Default::default()
+        };
+        sender
+            .send((
+                vec![remote],
+                vec![icy_term::data::SourceReport {
+                    name: "Community".into(),
+                    report: Some(report),
+                }],
+            ))
+            .unwrap();
         let mut dialog = DialingDirectory {
             phonebook: Some(book),
             open: true,
@@ -1578,6 +1605,47 @@ mod tests {
         assert_eq!(book.book.addresses.len(), 2);
         assert_eq!(book.draft.as_ref().unwrap().system_name, "Local BBS");
         assert!(dialog.source_result.is_none());
+        assert_eq!(dialog.source_reports.len(), 1);
+        assert!(dialog.error.is_none());
+    }
+
+    #[test]
+    fn a_source_that_fails_to_load_is_reported() {
+        let fixture = Fixture::new();
+        let book = fixture.load();
+        let (sender, receiver) = std::sync::mpsc::channel();
+        sender
+            .send((
+                Vec::new(),
+                vec![icy_term::data::SourceReport {
+                    name: "Broken List".into(),
+                    report: None,
+                }],
+            ))
+            .unwrap();
+        let mut dialog = DialingDirectory {
+            phonebook: Some(book),
+            open: true,
+            source_result: Some(receiver),
+            ..Default::default()
+        };
+        frame(&mut dialog, &egui::Context::default(), vec![]);
+        assert!(dialog.error.as_deref().is_some_and(|error| error.contains("Broken List")));
+    }
+
+    #[test]
+    fn skipped_entries_are_explained() {
+        let report = icy_term::data::ImportReport {
+            imported: 5,
+            unsupported: 2,
+            duplicates: 1,
+            ..Default::default()
+        };
+        let text = super::source_report_text(&report);
+        assert!(text.contains("Imported: 5"));
+        assert!(text.contains("Skipped 2: unsupported connection type"));
+        assert!(text.contains("Skipped 1: duplicate"));
+        assert!(!text.contains("no port"));
     }
 
     #[test]
@@ -1953,4 +2021,20 @@ mod tests {
         );
         assert!(matches!(request, Some(DialRequest::Quick(_, _))));
     }
+}
+
+/// Breakdown of what an import left out, for the Source menu tooltip.
+fn source_report_text(report: &icy_term::data::ImportReport) -> String {
+    let mut lines = vec![format!("Imported: {}", report.imported)];
+    for (count, what) in [
+        (report.unsupported, "unsupported connection type"),
+        (report.duplicates, "duplicate host/port/type"),
+        (report.missing_address, "no address"),
+        (report.missing_port, "no port"),
+    ] {
+        if count > 0 {
+            lines.push(format!("Skipped {count}: {what}"));
+        }
+    }
+    lines.join("\n")
 }

@@ -319,6 +319,18 @@ impl Settings {
                                 if ui.button(&*tr!("settings-modem-remove-button")).clicked() {
                                     remove = Some(index);
                                 }
+                                if ui.button(&*tr!("settings-web-directory-browse")).clicked() {
+                                    if let Some(path) = rfd::FileDialog::new()
+                                        .add_filter("BBS lists", &["lst", "toml", "ini", "txt"])
+                                        .add_filter("All files", &["*"])
+                                        .pick_file()
+                                    {
+                                        if source.name.trim().is_empty() {
+                                            source.name = path.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+                                        }
+                                        source.url = path.display().to_string();
+                                    }
+                                }
                             });
                         });
                     });
@@ -637,9 +649,16 @@ fn validate(options: &Options) -> Result<(), String> {
         if source.name.trim().is_empty() {
             return Err("Web directory name is required".into());
         }
-        let url = url::Url::parse(&source.url).map_err(|_| "Invalid web directory URL")?;
+        // A local list file is fine as an absolute path or file:// URL.
+        if std::path::Path::new(source.url.trim()).is_absolute() {
+            continue;
+        }
+        let url = url::Url::parse(source.url.trim()).map_err(|_| "Invalid web directory URL or file path")?;
+        if url.scheme() == "file" {
+            continue;
+        }
         if url.scheme() != "https" || url.host_str().is_none() || !url.username().is_empty() || url.password().is_some() {
-            return Err("Web directories require an HTTPS URL without credentials".into());
+            return Err("Web directories require an HTTPS URL without credentials, or a local file".into());
         }
     }
     let mut names = std::collections::HashSet::new();
